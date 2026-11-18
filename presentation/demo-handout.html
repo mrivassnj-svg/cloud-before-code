@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cloud Before Code — Lesson 6 Handout</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #1f2328;
+    background: #fff;
+    padding: 24px 32px;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+  .header { border-bottom: 2px solid #1f2328; padding-bottom: 8px; margin-bottom: 14px; }
+  .header h1 { font-size: 17px; font-weight: 700; }
+  .header h2 { font-size: 12px; font-weight: 400; color: #57606a; margin-top: 2px; }
+  .story { background: #f7f8fa; border-left: 3px solid #3b82d4; padding: 10px 14px; margin-bottom: 14px; }
+  .story strong { display: block; margin-bottom: 3px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: #3b82d4; }
+  h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 0 6px; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; }
+  .policy { background: #f7f8fa; border: 1px solid #e5e7eb; padding: 10px 14px; margin-bottom: 10px; }
+  .policy ul { padding-left: 18px; }
+  .policy li { margin-bottom: 4px; }
+  .badge {
+    display: inline-block; background: #1f2328; color: #fff;
+    font-size: 10px; font-weight: 700; padding: 1px 6px;
+    border-radius: 3px; margin-right: 4px; vertical-align: middle;
+  }
+  .principle { margin-top: 8px; font-weight: 700; font-size: 12px; color: #3b82d4; }
+  .key { font-size: 11px; color: #57606a; margin-bottom: 8px; }
+  .key span { margin-right: 14px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; font-size: 12px; }
+  th { background: #1f2328; color: #fff; padding: 6px 8px; text-align: left; }
+  th.c { text-align: center; width: 70px; }
+  td { padding: 7px 8px; border-bottom: 1px solid #e5e7eb; border-right: 1px solid #e5e7eb; }
+  td.c { text-align: center; color: #c0c0c0; font-size: 11px; width: 70px; }
+  .write-line { border-bottom: 1px solid #c0c0c0; display: block; height: 22px; margin-bottom: 6px; }
+  .explain-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .explain-box { border: 1px solid #e5e7eb; padding: 10px; background: #f7f8fa; }
+  .explain-box .label { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #57606a; margin-bottom: 6px; }
+  .explain-box .hint { font-size: 10px; color: #8b949e; margin-bottom: 6px; font-style: italic; }
+  .check-q { margin-bottom: 6px; }
+  .tf { font-size: 15px; font-weight: 700; letter-spacing: 0.1em; margin: 6px 0 8px; }
+  .footer { margin-top: 18px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 10px; color: #8b949e; text-align: center; }
+  @media print {
+    body { padding: 14px 18px; }
+    .story, .policy, .explain-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Cloud Before Code &mdash; Lesson 6: Who Can Change the Menu?</h1>
+  <h2>Michael Rovas &nbsp;&middot;&nbsp; 6271-ITAI-3371 Cloud Config &amp; Resources AI &nbsp;&middot;&nbsp; Instructor: Karthik Rajan &nbsp;&middot;&nbsp; Nov 17, 2026</h2>
+</div>
+
+<div class="story">
+  <strong>The situation</strong>
+  LunchRush is a small food-ordering business. Last night, a customer was charged the wrong price. Someone changed it at 11 p.m. — no one knows who. Jordan asks: <em>"Does everyone on the team have access to everything?"</em>
+</div>
+
+<h3>Step 1 &mdash; Before the vocabulary: your first thought</h3>
+<p style="margin-bottom:6px;">Think of a place with different access levels (a hospital, office, school). What question would you ask to decide what access a person should have?</p>
+<span class="write-line"></span>
+<span class="write-line"></span>
+
+<h3>Step 2 &mdash; LunchRush access policy</h3>
+<div class="policy">
+  <ul>
+    <li><span class="badge">Jordan</span> Owner &mdash; can view and change <strong>anything</strong>.</li>
+    <li><span class="badge">Sam</span> Menu manager &mdash; can edit menu items and photos. <strong>Cannot</strong> access financial records or change prices.</li>
+    <li><span class="badge">Riley</span> Delivery coordinator &mdash; can view orders and update delivery status. <strong>Cannot</strong> change menu or financial data.</li>
+    <li><span class="badge">Alex</span> Tech helper &mdash; can view and change technical configuration. Does <strong>not</strong> need customer payment data during normal operations.</li>
+  </ul>
+  <p class="principle">&#9654; Apply least privilege: give each person only the access they need to do their job.</p>
+</div>
+
+<h3>Step 3 &mdash; Permissions table</h3>
+<div class="key">
+  <span><strong>R</strong> = Read (view only)</span>
+  <span><strong>W</strong> = Write (view + change)</span>
+  <span><strong>&mdash;</strong> = No access</span>
+</div>
+<table>
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th class="c">Jordan</th>
+      <th class="c">Sam</th>
+      <th class="c">Riley</th>
+      <th class="c">Alex</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Menu item names and descriptions</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+    <tr><td>Menu photos</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+    <tr><td>Menu item prices</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+    <tr><td>Customer order details</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+    <tr><td>Delivery status</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+    <tr><td>Financial records</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+    <tr><td>Technical system configuration</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+    <tr><td>Customer payment information</td><td class="c"></td><td class="c"></td><td class="c"></td><td class="c"></td></tr>
+  </tbody>
+</table>
+
+<h3>Step 4 &mdash; Explain it twice</h3>
+<div class="explain-grid">
+  <div class="explain-box">
+    <div class="label">To Jordan (no jargon)</div>
+    <div class="hint">2&ndash;3 sentences. Plain language only.</div>
+    <span class="write-line"></span>
+    <span class="write-line"></span>
+    <span class="write-line"></span>
+  </div>
+  <div class="explain-box">
+    <div class="label">To Alex (use the vocabulary)</div>
+    <div class="hint">Use: <em>authentication, authorization, IAM, least privilege</em></div>
+    <span class="write-line"></span>
+    <span class="write-line"></span>
+    <span class="write-line"></span>
+  </div>
+</div>
+
+<h3>Step 5 &mdash; Quick understanding check</h3>
+<p class="check-q"><strong>True or False:</strong> The cloud provider is responsible for making sure Sam can&rsquo;t change menu prices. Circle and explain in one sentence.</p>
+<p class="tf">TRUE &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; FALSE</p>
+<span class="write-line"></span>
+<span class="write-line"></span>
+
+<div class="footer">
+  Cloud Before Code &mdash; LunchRush Curriculum &nbsp;|&nbsp; All business names and scenarios are fictional &nbsp;|&nbsp; Made with IBM Bob
+</div>
+</body>
+</html>
