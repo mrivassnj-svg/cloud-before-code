@@ -20,12 +20,8 @@
     <!-- Main content -->
     <main>
       <div style="margin-bottom:6px;">
-        <span style="font-size:12px;color:var(--muted);">Lesson {{ lesson.number }}</span>
-        {% if lesson.full %}
+        <span style="font-size:12px;color:var(--muted);">Lesson {{ lesson.number }} of 8</span>
         <span class="badge badge-full" style="margin-left:8px;">Full lesson</span>
-        {% else %}
-        <span class="badge badge-outline" style="margin-left:8px;">Outline</span>
-        {% endif %}
       </div>
 
       <h1 class="page-title">{{ lesson.title }}</h1>
@@ -37,8 +33,15 @@
         {{ lesson.story }}
       </div>
 
+      <!-- Step 1: Exploratory -->
+      <div class="section-heading">Step 1 — Before the Vocabulary</div>
+      <div class="step-box step-explore">
+        <div class="step-label">🔍 Exploratory Task</div>
+        <p>{{ lesson.exploratory }}</p>
+      </div>
+
       <!-- Essential terms -->
-      <div class="section-heading">Essential Terms</div>
+      <div class="section-heading">Step 2 — Essential Terms</div>
       <div class="term-list">
         {% for term in essential %}
         <div class="term-card">
@@ -79,6 +82,34 @@
       </div>
       {% endif %}
 
+      <!-- Step 3: Activity -->
+      <div class="section-heading">Step 3 — Main Activity</div>
+      <div class="step-box step-activity">
+        <div class="step-label">✏️ Activity</div>
+        <p>{{ lesson.activity }}</p>
+      </div>
+
+      <!-- Step 4: Explain it twice -->
+      <div class="section-heading">Step 4 — Explain It Twice</div>
+      <div class="explain-grid">
+        <div class="explain-box">
+          <div class="explain-label">To Jordan (no jargon)</div>
+          <p class="explain-prompt">{{ lesson.explain_plain }}</p>
+        </div>
+        <div class="explain-box">
+          <div class="explain-label">To Alex (use the vocabulary)</div>
+          <p class="explain-prompt">{{ lesson.explain_tech }}</p>
+        </div>
+      </div>
+
+      <!-- Step 5: Exit check -->
+      <div class="section-heading">Step 5 — Exit Check</div>
+      <div class="exit-list">
+        <div class="exit-q"><span class="exit-num">1</span>{{ lesson.exit_q1 }}</div>
+        <div class="exit-q"><span class="exit-num">2</span>{{ lesson.exit_q2 }}</div>
+        <div class="exit-q"><span class="exit-num">3</span>{{ lesson.exit_q3 }}</div>
+      </div>
+
       <!-- Actions -->
       <div class="action-row">
         <a class="btn-accent" href="/lesson/{{ lesson.number }}/flashcards">
@@ -88,7 +119,7 @@
         <a class="btn-secondary" href="/lesson/{{ lesson.number - 1 }}">← Previous</a>
         {% endif %}
         {% if lesson.number < 8 %}
-        <a class="btn-secondary" href="/lesson/{{ lesson.number + 1 }}">Next →</a>
+        <a class="btn-secondary" href="/lesson/{{ lesson.number + 1 }}">Next Lesson →</a>
         {% endif %}
       </div>
     </main>
