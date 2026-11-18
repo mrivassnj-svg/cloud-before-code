@@ -1,5 +1,4 @@
 import httpx
-import json
 from sqlalchemy.orm import Session
 from database import Term
 
@@ -106,9 +105,9 @@ Keep feedback under 60 words. If their answer was very brief or off-topic, still
 def explain_it_back(term_word: str, term_definition: str, learner_response: str) -> dict:
     """
     After a learner types their explanation of a term, check it and give feedback.
-    Returns {"score": "strong"|"developing"|"beginning", "comment": str, "missed": [str]}
+    Returns {"score": "strong"|"developing"|"beginning", "comment": str}
     """
-    prompt = f"""You are a friendly cloud-computing tutor.
+    prompt = f"""You are a friendly cloud-computing tutor helping a beginner.
 
 The learner was asked to explain the term "{term_word}" in their own words.
 The correct definition is: "{term_definition}"
@@ -116,14 +115,15 @@ The correct definition is: "{term_definition}"
 The learner wrote:
 \"\"\"{learner_response}\"\"\"
 
-Assess their explanation:
-1. Write one SHORT sentence of specific feedback (under 25 words). Be encouraging but honest.
+Assess their explanation with TWO parts:
+1. Write 2-3 sentences of specific, encouraging feedback. Name one thing they got right and,
+   if needed, one concrete thing to sharpen. Use plain language — no jargon.
 2. On a new line write: SCORE: strong OR SCORE: developing OR SCORE: beginning
    - strong = captures the core idea accurately
    - developing = partially correct or missing one key idea
-   - beginning = missing the core idea or confused
+   - beginning = missing the core idea or is confused
 
-Do not repeat the definition back to them verbatim.
+Do not repeat the definition back to them verbatim. Do not start with "Great job" or generic praise.
 """
     raw = _ask(prompt, timeout=30)
 
@@ -139,5 +139,68 @@ Do not repeat the definition back to them verbatim.
             if l:
                 comment_lines.append(l)
 
-    comment = " ".join(comment_lines).strip() or "Keep going — you're on the right track."
+    comment = " ".join(comment_lines).strip() or "Keep going — you're building the right idea."
     return {"score": score, "comment": comment}
+
+
+def check_exit_question(question: str, learner_answer: str, context: str) -> dict:
+    """
+    Evaluate a learner's short answer to an exit question.
+    context = plain-language summary of what the lesson covered.
+    Returns {"score": "strong"|"developing"|"beginning", "comment": str, "hint": str}
+    """
+    prompt = f"""You are a friendly cloud-computing tutor helping a beginner.
+
+Lesson context (what was taught):
+{context}
+
+Exit question asked:
+"{question}"
+
+The learner answered:
+\"\"\"{learner_answer}\"\"\"
+
+Your response must have exactly three parts:
+
+FEEDBACK: Write 2-4 sentences. Name specifically what the learner got right. If their answer
+is incomplete or confused, explain the gap in plain language (no jargon). Be warm but honest.
+
+SCORE: strong OR developing OR beginning
+  - strong    = answer is accurate and captures the key idea
+  - developing = partially correct, missing one key distinction
+  - beginning  = missing the core concept or significantly confused
+
+HINT: One sentence (under 20 words) giving a nudge toward the correct answer, without
+giving it away. Write this even for strong scores — frame it as "to go deeper…"
+"""
+    raw = _ask(prompt, timeout=40)
+
+    score = "developing"
+    feedback_lines = []
+    hint = ""
+
+    mode = "feedback"
+    for line in raw.splitlines():
+        l = line.strip()
+        if l.upper().startswith("FEEDBACK:"):
+            mode = "feedback"
+            rest = l.split(":", 1)[1].strip()
+            if rest:
+                feedback_lines.append(rest)
+        elif l.upper().startswith("SCORE:"):
+            val = l.split(":", 1)[1].strip().lower()
+            if val in ("strong", "developing", "beginning"):
+                score = val
+            mode = "score"
+        elif l.upper().startswith("HINT:"):
+            hint = l.split(":", 1)[1].strip()
+            mode = "hint"
+        elif mode == "feedback" and l:
+            feedback_lines.append(l)
+        elif mode == "hint" and l and not hint:
+            hint = l
+
+    comment = " ".join(feedback_lines).strip() or "Keep going — you're building the right idea."
+    if not hint:
+        hint = "Re-read the term definition and try to put it in your own words."
+    return {"score": score, "comment": comment, "hint": hint}

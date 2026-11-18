@@ -217,15 +217,74 @@
       <!-- ── EXIT CHECK ─────────────────────────────────────────────────── -->
       <div class="ls-step" id="step-exit">
         <div class="step-heading">Step 4 — Exit Check</div>
-        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
-          Three short questions. Write your answers in your workbook or on paper — these are for your own reflection.
-        </p>
-        <div class="exit-list">
-          <div class="exit-q"><span class="exit-num">1</span>{{ lesson.exit_q1 }}</div>
-          <div class="exit-q"><span class="exit-num">2</span>{{ lesson.exit_q2 }}</div>
-          <div class="exit-q"><span class="exit-num">3</span>{{ lesson.exit_q3 }}</div>
+
+        <!-- Illustration: visual scene before questions appear -->
+        {% if lesson_svg %}
+        <div class="exit-illustration">
+          <div class="exit-illus-label">📌 Think back to this lesson's scenario before you answer</div>
+          <div class="exit-illus-svg">{{ lesson_svg | safe }}</div>
         </div>
-        <div class="step-nav" style="flex-wrap:wrap;gap:10px;">
+        {% endif %}
+
+        <p class="exit-intro">
+          Three questions — one at a time. Type your answer and get personalised feedback before moving on.
+        </p>
+
+        <!-- Q1 -->
+        <div class="exit-card" id="eq-1">
+          <div class="exit-q-num">Question 1 of 3</div>
+          <div class="exit-q-text">{{ lesson.exit_q1 }}</div>
+          <textarea class="exit-answer" id="ea-1" placeholder="Write your answer here…" rows="3"></textarea>
+          <div class="exit-q-actions">
+            <button class="btn-step btn-check" onclick="checkExit(1, {{ lesson.number | tojson }}, {{ lesson.exit_q1 | tojson }})">Check my answer →</button>
+          </div>
+          <div class="exit-feedback" id="ef-1" style="display:none;"></div>
+          <div class="exit-hint-row" id="eh-1" style="display:none;">
+            <button class="hint-toggle" onclick="toggleHint(1)">💡 Show hint</button>
+            <div class="hint-text" id="ht-1" style="display:none;"></div>
+          </div>
+          <div class="exit-next" id="en-1" style="display:none;">
+            <button class="btn-step btn-next-q" onclick="showExitQ(2)">Next question →</button>
+          </div>
+        </div>
+
+        <!-- Q2 (locked until Q1 answered) -->
+        <div class="exit-card exit-locked" id="eq-2">
+          <div class="exit-q-num">Question 2 of 3</div>
+          <div class="exit-q-text">{{ lesson.exit_q2 }}</div>
+          <textarea class="exit-answer" id="ea-2" placeholder="Write your answer here…" rows="3" disabled></textarea>
+          <div class="exit-q-actions">
+            <button class="btn-step btn-check" onclick="checkExit(2, {{ lesson.number | tojson }}, {{ lesson.exit_q2 | tojson }})" disabled>Check my answer →</button>
+          </div>
+          <div class="exit-feedback" id="ef-2" style="display:none;"></div>
+          <div class="exit-hint-row" id="eh-2" style="display:none;">
+            <button class="hint-toggle" onclick="toggleHint(2)">💡 Show hint</button>
+            <div class="hint-text" id="ht-2" style="display:none;"></div>
+          </div>
+          <div class="exit-next" id="en-2" style="display:none;">
+            <button class="btn-step btn-next-q" onclick="showExitQ(3)">Next question →</button>
+          </div>
+        </div>
+
+        <!-- Q3 (locked until Q2 answered) -->
+        <div class="exit-card exit-locked" id="eq-3">
+          <div class="exit-q-num">Question 3 of 3</div>
+          <div class="exit-q-text">{{ lesson.exit_q3 }}</div>
+          <textarea class="exit-answer" id="ea-3" placeholder="Write your answer here…" rows="3" disabled></textarea>
+          <div class="exit-q-actions">
+            <button class="btn-step btn-check" onclick="checkExit(3, {{ lesson.number | tojson }}, {{ lesson.exit_q3 | tojson }})" disabled>Check my answer →</button>
+          </div>
+          <div class="exit-feedback" id="ef-3" style="display:none;"></div>
+          <div class="exit-hint-row" id="eh-3" style="display:none;">
+            <button class="hint-toggle" onclick="toggleHint(3)">💡 Show hint</button>
+            <div class="hint-text" id="ht-3" style="display:none;"></div>
+          </div>
+          <div class="exit-finish" id="en-3" style="display:none;">
+            <p class="exit-done-msg">✓ All three exit questions completed for this lesson.</p>
+          </div>
+        </div>
+
+        <div class="step-nav" style="flex-wrap:wrap;gap:10px;margin-top:24px;">
           <button class="btn-link-back" onclick="goStep('step-explain')">← Back</button>
           <a class="btn-accent" href="/lesson/{{ lesson.number }}/flashcards">🃏 Review with Flashcards</a>
           {% if lesson.number < 8 %}
@@ -389,6 +448,145 @@
 .eb-strong    { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
 .eb-developing{ background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
 .eb-beginning { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+
+/* ── Exit check illustration ─────────────────────────────────────────────── */
+.exit-illustration {
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.exit-illus-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 8px 14px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.exit-illus-svg {
+  display: flex;
+  justify-content: center;
+  padding: 12px 10px;
+}
+.exit-illus-svg svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ── Exit check cards ────────────────────────────────────────────────────── */
+.exit-intro {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+.exit-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px 20px 16px;
+  margin-bottom: 16px;
+  background: var(--bg);
+  transition: opacity 0.3s ease;
+}
+.exit-locked {
+  opacity: 0.42;
+  pointer-events: none;
+  user-select: none;
+}
+.exit-locked textarea { background: var(--surface); }
+.exit-q-num {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.exit-q-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 12px;
+}
+.exit-answer {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 10px;
+  box-sizing: border-box;
+}
+.exit-answer:focus { border-color: var(--accent); }
+.exit-q-actions { margin-bottom: 4px; }
+.btn-check { font-size: 13px; padding: 8px 18px; }
+.btn-check:disabled { opacity: 0.4; cursor: default; }
+.exit-feedback {
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.exit-fb-strong    { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+.exit-fb-developing{ background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
+.exit-fb-beginning { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+
+/* score badge inside feedback */
+.exit-score-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.badge-strong     { background: #059669; color: #fff; }
+.badge-developing { background: #d97706; color: #fff; }
+.badge-beginning  { background: #dc2626; color: #fff; }
+
+/* hint row */
+.exit-hint-row { margin-top: 10px; }
+.hint-toggle {
+  background: none;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+}
+.hint-toggle:hover { background: var(--surface); color: var(--text); }
+.hint-text {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.exit-next { margin-top: 12px; }
+.btn-next-q { font-size: 13px; padding: 8px 18px; }
+.exit-finish { margin-top: 14px; }
+.exit-done-msg {
+  font-size: 14px;
+  font-weight: 600;
+  color: #166534;
+  padding: 10px 14px;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+}
 </style>
 
 <script>
@@ -501,6 +699,102 @@ async function checkExplanation(termId) {
   } finally {
     btn.textContent = 'Check →';
     btn.disabled = false;
+  }
+}
+
+// ── Exit check ───────────────────────────────────────────────────────────────
+
+async function checkExit(qNum, lessonNumber, question) {
+  const textarea = document.getElementById(`ea-${qNum}`);
+  const answer   = textarea.value.trim();
+  if (!answer) {
+    textarea.focus();
+    return;
+  }
+
+  const btn = textarea.closest('.exit-card').querySelector('.btn-check');
+  btn.textContent = 'Checking… (~10 s)';
+  btn.disabled = true;
+
+  const fbDiv   = document.getElementById(`ef-${qNum}`);
+  const hintRow = document.getElementById(`eh-${qNum}`);
+  const nextRow = document.getElementById(`en-${qNum}`);
+
+  try {
+    const res = await fetch('/api/exit-check', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({lesson_number: lessonNumber, question, answer})
+    });
+    const data = await res.json();
+
+    // Score styling
+    const scoreClass = {
+      strong:     'exit-fb-strong',
+      developing: 'exit-fb-developing',
+      beginning:  'exit-fb-beginning',
+    }[data.score] || 'exit-fb-developing';
+
+    const badgeClass = {
+      strong:     'badge-strong',
+      developing: 'badge-developing',
+      beginning:  'badge-beginning',
+    }[data.score] || 'badge-developing';
+
+    const scoreText = {
+      strong:     '✓ Strong',
+      developing: '~ Developing',
+      beginning:  '↺ Keep going',
+    }[data.score] || data.score;
+
+    fbDiv.style.display = 'block';
+    fbDiv.className = `exit-feedback ${scoreClass}`;
+    fbDiv.innerHTML =
+      `<span class="exit-score-badge ${badgeClass}">${scoreText}</span>${data.comment}`;
+
+    // Store hint for reveal on demand
+    if (data.hint) {
+      document.getElementById(`ht-${qNum}`).textContent = data.hint;
+      hintRow.style.display = 'block';
+    }
+
+    // Show "next question" or "done" button
+    if (nextRow) nextRow.style.display = 'block';
+
+  } catch(e) {
+    fbDiv.style.display = 'block';
+    fbDiv.className = 'exit-feedback exit-fb-developing';
+    fbDiv.textContent = 'Could not connect to AI — check your answer and try again.';
+    // Still allow advancing
+    if (nextRow) nextRow.style.display = 'block';
+  } finally {
+    btn.textContent = 'Check my answer →';
+    btn.disabled = false;
+    textarea.disabled = true;   // lock answer after checking
+  }
+}
+
+function showExitQ(qNum) {
+  const card = document.getElementById(`eq-${qNum}`);
+  if (!card) return;
+  card.classList.remove('exit-locked');
+  const ta  = card.querySelector('.exit-answer');
+  const btn = card.querySelector('.btn-check');
+  if (ta)  ta.disabled  = false;
+  if (btn) btn.disabled = false;
+  card.scrollIntoView({behavior: 'smooth', block: 'start'});
+  if (ta) setTimeout(() => ta.focus(), 300);
+}
+
+function toggleHint(qNum) {
+  const hintText   = document.getElementById(`ht-${qNum}`);
+  const toggleBtn  = document.getElementById(`eh-${qNum}`).querySelector('.hint-toggle');
+  if (hintText.style.display === 'none') {
+    hintText.style.display = 'block';
+    toggleBtn.textContent  = '💡 Hide hint';
+  } else {
+    hintText.style.display = 'none';
+    toggleBtn.textContent  = '💡 Show hint';
   }
 }
 
