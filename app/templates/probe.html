@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Lesson {{ lesson.number }}: Before We Start — Cloud Before Code{% endblock %}
+{% block content %}
+<div class="container" style="max-width:680px;">
+
+  <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+    <a href="/">← All Lessons</a>
+  </p>
+
+  <div style="margin-bottom:8px;">
+    <span style="font-size:12px;color:var(--muted);">Lesson {{ lesson.number }} of 8 &nbsp;·&nbsp; Before the vocabulary</span>
+  </div>
+
+  <h1 class="page-title">{{ lesson.title }}</h1>
+  <p class="page-sub">{{ lesson.challenge }}</p>
+
+  <!-- Scene -->
+  <div class="story-box" style="margin-bottom:24px;">
+    <strong>The Scene</strong>
+    {{ lesson.story }}
+  </div>
+
+  <!-- Probe question -->
+  <div class="probe-card">
+    <div class="probe-icon">🔍</div>
+    <h2 class="probe-heading">Before we name anything — what do you think?</h2>
+    <p class="probe-sub">{{ lesson.exploratory }}</p>
+    <p class="probe-hint">Write as much or as little as you like. There are no wrong answers — your response will personalise your lesson.</p>
+
+    <form method="post" action="/lesson/{{ lesson.number }}/probe" id="probeForm">
+      <textarea
+        name="answer"
+        id="probeAnswer"
+        class="probe-textarea"
+        placeholder="Type your thoughts here…"
+        rows="5"
+        required
+      ></textarea>
+
+      <div class="probe-actions">
+        <button type="submit" class="btn-primary probe-submit" id="submitBtn">
+          <span id="btnText">Personalise my lesson →</span>
+          <span id="btnLoading" style="display:none;">Thinking… this takes about 10 seconds</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:16px;">
+    Prefer to skip? <a href="/lesson/{{ lesson.number }}">Go straight to the lesson →</a>
+  </p>
+
+</div>
+
+<style>
+.probe-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 28px 28px 24px;
+  background: var(--bg);
+}
+.probe-icon { font-size: 28px; margin-bottom: 10px; }
+.probe-heading { font-size: 18px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+.probe-sub { font-size: 14px; color: var(--text); line-height: 1.6; margin-bottom: 10px; }
+.probe-hint { font-size: 12px; color: var(--muted); margin-bottom: 18px; font-style: italic; }
+.probe-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 14px;
+}
+.probe-textarea:focus { border-color: var(--accent); }
+.probe-actions { display: flex; justify-content: flex-end; }
+.probe-submit { width: auto; padding: 10px 24px; font-size: 14px; }
+</style>
+
+<script>
+document.getElementById('probeForm').addEventListener('submit', function() {
+  document.getElementById('btnText').style.display = 'none';
+  document.getElementById('btnLoading').style.display = 'inline';
+  document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

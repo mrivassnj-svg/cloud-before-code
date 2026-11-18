@@ -7,7 +7,7 @@
 
   <div class="lesson-grid">
     {% for lesson in lessons %}
-    <a class="lesson-card" href="/lesson/{{ lesson.number }}">
+    <a class="lesson-card" href="/lesson/{{ lesson.number }}/probe">
       <div>
         <div class="lesson-num">Lesson {{ lesson.number }}</div>
         {% if lesson.full %}

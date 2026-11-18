@@ -9,7 +9,7 @@
       <div class="sidebar-nav">
         <div class="sidebar-nav-title">All Lessons</div>
         {% for l in all_lessons %}
-        <a href="/lesson/{{ l.number }}" class="{{ 'active' if l.number == lesson.number else '' }}">
+        <a href="/lesson/{{ l.number }}/probe" class="{{ 'active' if l.number == lesson.number else '' }}">
           <span class="sn">Lesson {{ l.number }}</span>
           {{ l.title }}
         </a>
@@ -29,23 +29,59 @@
 
       <!-- Story -->
       <div class="story-box">
-        <strong>The Story</strong>
+        <strong>The Scene</strong>
         {{ lesson.story }}
       </div>
 
-      <!-- Step 1: Exploratory -->
+      <!-- AI feedback banner (only shown after probe) -->
+      {% if ai_feedback %}
+      <div class="ai-banner">
+        <div class="ai-banner-icon">🤖</div>
+        <div>
+          <div class="ai-banner-label">Personalised for you</div>
+          <div class="ai-banner-text">{{ ai_feedback }}</div>
+          {% if unclear_words %}
+          <div class="ai-tags">
+            <span class="ai-tag-label">Focus on:</span>
+            {% for w in unclear_words %}<span class="ai-tag ai-tag-unclear">{{ w }}</span>{% endfor %}
+          </div>
+          {% endif %}
+          {% if understood_words %}
+          <div class="ai-tags" style="margin-top:4px;">
+            <span class="ai-tag-label">Already getting:</span>
+            {% for w in understood_words %}<span class="ai-tag ai-tag-understood">{{ w }}</span>{% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Step 1: Exploratory (shown only when NOT coming from probe) -->
+      {% if not ai_feedback %}
       <div class="section-heading">Step 1 — Before the Vocabulary</div>
       <div class="step-box step-explore">
         <div class="step-label">🔍 Exploratory Task</div>
         <p>{{ lesson.exploratory }}</p>
+        <p style="margin-top:10px;font-size:12px;color:var(--muted);">
+          <a href="/lesson/{{ lesson.number }}/probe">Get a personalised lesson based on your answer →</a>
+        </p>
       </div>
+      {% endif %}
 
       <!-- Essential terms -->
-      <div class="section-heading">Step 2 — Essential Terms</div>
+      <div class="section-heading">{% if ai_feedback %}Your Personalised Term Order{% else %}Step 2 — Essential Terms{% endif %}</div>
       <div class="term-list">
         {% for term in essential %}
-        <div class="term-card">
-          <div class="term-word">{{ term.word }}</div>
+        <div class="term-card {% if unclear_words and term.word in unclear_words %}term-focus{% endif %}" id="term-{{ term.id }}">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div class="term-word">{{ term.word }}</div>
+            {% if unclear_words and term.word in unclear_words %}
+            <span class="focus-badge">Focus term</span>
+            {% endif %}
+            {% if understood_words and term.word in understood_words %}
+            <span class="understood-badge">You know this</span>
+            {% endif %}
+          </div>
           <div class="term-def">{{ term.definition }}</div>
           <div class="term-row">
             <span class="term-row-label">In plain language</span>
@@ -56,6 +92,14 @@
             <span>{{ term.lunchrush }}</span>
           </div>
           <div class="term-limit">{{ term.analogy_limit }}</div>
+
+          <!-- Explain it back -->
+          <div class="explain-back" id="eb-{{ term.id }}">
+            <div class="eb-label">💬 Explain it back</div>
+            <textarea class="eb-input" placeholder="Explain '{{ term.word }}' in your own words…" rows="2" data-term-id="{{ term.id }}" data-term-word="{{ term.word }}"></textarea>
+            <button class="eb-btn" onclick="checkExplanation({{ term.id }})">Check →</button>
+            <div class="eb-feedback" id="ebf-{{ term.id }}" style="display:none;"></div>
+          </div>
         </div>
         {% endfor %}
       </div>
@@ -83,14 +127,14 @@
       {% endif %}
 
       <!-- Step 3: Activity -->
-      <div class="section-heading">Step 3 — Main Activity</div>
+      <div class="section-heading">{% if ai_feedback %}Activity{% else %}Step 3 — Main Activity{% endif %}</div>
       <div class="step-box step-activity">
         <div class="step-label">✏️ Activity</div>
         <p>{{ lesson.activity }}</p>
       </div>
 
       <!-- Step 4: Explain it twice -->
-      <div class="section-heading">Step 4 — Explain It Twice</div>
+      <div class="section-heading">{% if ai_feedback %}Explain It Twice{% else %}Step 4 — Explain It Twice{% endif %}</div>
       <div class="explain-grid">
         <div class="explain-box">
           <div class="explain-label">To Jordan (no jargon)</div>
@@ -103,7 +147,7 @@
       </div>
 
       <!-- Step 5: Exit check -->
-      <div class="section-heading">Step 5 — Exit Check</div>
+      <div class="section-heading">{% if ai_feedback %}Exit Check{% else %}Step 5 — Exit Check{% endif %}</div>
       <div class="exit-list">
         <div class="exit-q"><span class="exit-num">1</span>{{ lesson.exit_q1 }}</div>
         <div class="exit-q"><span class="exit-num">2</span>{{ lesson.exit_q2 }}</div>
@@ -116,14 +160,117 @@
           🃏 Study with Flashcards
         </a>
         {% if lesson.number > 1 %}
-        <a class="btn-secondary" href="/lesson/{{ lesson.number - 1 }}">← Previous</a>
+        <a class="btn-secondary" href="/lesson/{{ lesson.number - 1 }}/probe">← Previous</a>
         {% endif %}
         {% if lesson.number < 8 %}
-        <a class="btn-secondary" href="/lesson/{{ lesson.number + 1 }}">Next Lesson →</a>
+        <a class="btn-secondary" href="/lesson/{{ lesson.number + 1 }}/probe">Next Lesson →</a>
         {% endif %}
       </div>
     </main>
 
   </div>
 </div>
+
+<style>
+/* AI banner */
+.ai-banner {
+  display: flex;
+  gap: 14px;
+  background: #f0f4ff;
+  border: 1px solid #c7d7f8;
+  border-radius: 8px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.ai-banner-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.ai-banner-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #3b82d4; margin-bottom: 4px; }
+.ai-banner-text { font-size: 14px; color: #1f2328; line-height: 1.6; }
+.ai-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.ai-tag-label { font-size: 11px; color: #57606a; font-weight: 600; }
+.ai-tag { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.ai-tag-unclear { background: #fef3c7; color: #92400e; }
+.ai-tag-understood { background: #dcfce7; color: #166534; }
+
+/* Term focus badges */
+.term-focus { border-left: 3px solid #f59e0b; }
+.focus-badge { font-size: 10px; font-weight: 700; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+.understood-badge { font-size: 10px; font-weight: 700; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+
+/* Explain it back */
+.explain-back {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--surface);
+}
+.eb-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 6px; }
+.eb-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: none;
+  outline: none;
+  margin-bottom: 6px;
+}
+.eb-input:focus { border-color: var(--accent); }
+.eb-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.eb-btn:hover { background: var(--border); }
+.eb-feedback {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.eb-strong { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+.eb-developing { background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
+.eb-beginning { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
+</style>
+
+<script>
+async function checkExplanation(termId) {
+  const textarea = document.querySelector(`[data-term-id="${termId}"]`);
+  const response = textarea.value.trim();
+  if (!response) return;
+
+  const btn = textarea.nextElementSibling;
+  btn.textContent = 'Checking…';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch('/api/explain-check', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({term_id: termId, response: response})
+    });
+    const data = await res.json();
+
+    const fbDiv = document.getElementById(`ebf-${termId}`);
+    fbDiv.style.display = 'block';
+    fbDiv.className = `eb-feedback eb-${data.score}`;
+
+    const scoreLabel = {strong: '✓ Strong', developing: '~ Developing', beginning: '↺ Keep going'}[data.score] || data.score;
+    fbDiv.innerHTML = `<strong>${scoreLabel}</strong> — ${data.comment}`;
+  } catch(e) {
+    const fbDiv = document.getElementById(`ebf-${termId}`);
+    fbDiv.style.display = 'block';
+    fbDiv.className = 'eb-feedback eb-developing';
+    fbDiv.textContent = 'Could not connect to AI — try again.';
+  } finally {
+    btn.textContent = 'Check →';
+    btn.disabled = false;
+  }
+}
+</script>
 {% endblock %}
