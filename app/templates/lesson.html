@@ -22,67 +22,92 @@
       <div style="margin-bottom:6px;">
         <span style="font-size:12px;color:var(--muted);">Lesson {{ lesson.number }} of 8</span>
         <span class="badge badge-full" style="margin-left:8px;">Full lesson</span>
+        <!-- Progress indicator -->
+        <span class="progress-label" id="progress-label" style="margin-left:12px;font-size:12px;color:var(--muted);"></span>
       </div>
 
       <h1 class="page-title">{{ lesson.title }}</h1>
       <p class="page-sub">{{ lesson.challenge }}</p>
 
-      <!-- Story -->
-      <div class="story-box">
-        <strong>The Scene</strong>
-        {{ lesson.story }}
-      </div>
+      <!-- ── STEP 0: Story ───────────────────────────────────────────────── -->
+      <div class="ls-step active" id="step-story">
+        <div class="story-box">
+          <strong>The Scene</strong>
+          {{ lesson.story }}
+        </div>
 
-      <!-- AI feedback banner (only shown after probe) -->
-      {% if ai_feedback %}
-      <div class="ai-banner">
-        <div class="ai-banner-icon">🤖</div>
-        <div>
-          <div class="ai-banner-label">Personalised for you</div>
-          <div class="ai-banner-text">{{ ai_feedback }}</div>
-          {% if unclear_words %}
-          <div class="ai-tags">
-            <span class="ai-tag-label">Focus on:</span>
-            {% for w in unclear_words %}<span class="ai-tag ai-tag-unclear">{{ w }}</span>{% endfor %}
+        <!-- AI banner (only after probe) -->
+        {% if ai_feedback %}
+        <div class="ai-banner">
+          <div class="ai-banner-icon">🤖</div>
+          <div>
+            <div class="ai-banner-label">Personalised for you</div>
+            <div class="ai-banner-text">{{ ai_feedback }}</div>
+            {% if unclear_words %}
+            <div class="ai-tags">
+              <span class="ai-tag-label">Focus on:</span>
+              {% for w in unclear_words %}<span class="ai-tag ai-tag-unclear">{{ w }}</span>{% endfor %}
+            </div>
+            {% endif %}
+            {% if understood_words %}
+            <div class="ai-tags" style="margin-top:4px;">
+              <span class="ai-tag-label">Already getting:</span>
+              {% for w in understood_words %}<span class="ai-tag ai-tag-understood">{{ w }}</span>{% endfor %}
+            </div>
+            {% endif %}
           </div>
-          {% endif %}
-          {% if understood_words %}
-          <div class="ai-tags" style="margin-top:4px;">
-            <span class="ai-tag-label">Already getting:</span>
-            {% for w in understood_words %}<span class="ai-tag ai-tag-understood">{{ w }}</span>{% endfor %}
-          </div>
-          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="step-nav">
+          <button class="btn-step" onclick="goStep('step-explore')">Continue →</button>
         </div>
       </div>
-      {% endif %}
 
-      <!-- Step 1: Exploratory (shown only when NOT coming from probe) -->
-      {% if not ai_feedback %}
-      <div class="section-heading">Step 1 — Before the Vocabulary</div>
-      <div class="step-box step-explore">
-        <div class="step-label">🔍 Exploratory Task</div>
-        <p>{{ lesson.exploratory }}</p>
-        <p style="margin-top:10px;font-size:12px;color:var(--muted);">
-          <a href="/lesson/{{ lesson.number }}/probe">Get a personalised lesson based on your answer →</a>
-        </p>
+      <!-- ── STEP 1: Exploratory task ───────────────────────────────────── -->
+      <div class="ls-step" id="step-explore">
+        <div class="step-heading">Step 1 — Before the Vocabulary</div>
+        <div class="step-box step-explore">
+          <div class="step-label">🔍 Think First</div>
+          <p>{{ lesson.exploratory }}</p>
+          <p style="margin-top:10px;font-size:12px;color:var(--muted);">
+            Take a moment to jot down your thoughts — there is no wrong answer here.
+            {% if not ai_feedback %}
+            <br><a href="/lesson/{{ lesson.number }}/probe">Get a personalised lesson based on your answer →</a>
+            {% endif %}
+          </p>
+        </div>
+        <div class="step-nav">
+          <button class="btn-link-back" onclick="goStep('step-story')">← Back</button>
+          <button class="btn-step" onclick="startTerms()">I'm ready — show me the vocabulary →</button>
+        </div>
       </div>
-      {% endif %}
 
-      <!-- Essential terms -->
-      <div class="section-heading">{% if ai_feedback %}Your Personalised Term Order{% else %}Step 2 — Essential Terms{% endif %}</div>
-      <div class="term-list">
-        {% for term in essential %}
+      <!-- ── STEPS 2-N: One term at a time ─────────────────────────────── -->
+      {% set essential_list = essential %}
+      {% for term in essential_list %}
+      <div class="ls-step" id="step-term-{{ loop.index }}" data-term-step="{{ loop.index }}" data-term-total="{{ essential_list | length }}">
+
+        <div class="step-heading">
+          Term {{ loop.index }} of {{ essential_list | length }}
+          {% if unclear_words and term.word in unclear_words %}
+          <span class="focus-badge" style="margin-left:8px;">Focus term</span>
+          {% endif %}
+          {% if understood_words and term.word in understood_words %}
+          <span class="understood-badge" style="margin-left:8px;">You know this</span>
+          {% endif %}
+        </div>
+
         <div class="term-card {% if unclear_words and term.word in unclear_words %}term-focus{% endif %}" id="term-{{ term.id }}">
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-            <div class="term-word">{{ term.word }}</div>
-            {% if unclear_words and term.word in unclear_words %}
-            <span class="focus-badge">Focus term</span>
-            {% endif %}
-            {% if understood_words and term.word in understood_words %}
-            <span class="understood-badge">You know this</span>
-            {% endif %}
+          <!-- Term name revealed with a soft fade-in after 0.4s -->
+          <div class="term-word term-reveal" id="tw-{{ term.id }}">{{ term.word }}</div>
+
+          <!-- Definition shown first without the word -->
+          <div class="term-teaser" id="tt-{{ term.id }}">
+            <em style="font-size:13px;color:var(--muted);">Read the description below and guess what this concept might be called before the name appears.</em>
           </div>
-          <div class="term-def">{{ term.definition }}</div>
+
+          <div class="term-def" style="margin-top:8px;">{{ term.definition }}</div>
           <div class="term-row">
             <span class="term-row-label">In plain language</span>
             <span>{{ term.plain }}</span>
@@ -93,86 +118,213 @@
           </div>
           <div class="term-limit">{{ term.analogy_limit }}</div>
 
-          <!-- Explain it back -->
+          <!-- Explain it back (inline, right here while the term is fresh) -->
           <div class="explain-back" id="eb-{{ term.id }}">
-            <div class="eb-label">💬 Explain it back</div>
-            <textarea class="eb-input" placeholder="Explain '{{ term.word }}' in your own words…" rows="2" data-term-id="{{ term.id }}" data-term-word="{{ term.word }}"></textarea>
+            <div class="eb-label">💬 Explain it back (optional — try it while it's fresh)</div>
+            <textarea class="eb-input" placeholder="Explain '{{ term.word }}' in your own words…" rows="2"
+              data-term-id="{{ term.id }}" data-term-word="{{ term.word }}"></textarea>
             <button class="eb-btn" onclick="checkExplanation({{ term.id }})">Check →</button>
             <div class="eb-feedback" id="ebf-{{ term.id }}" style="display:none;"></div>
           </div>
         </div>
-        {% endfor %}
-      </div>
 
-      <!-- Stretch terms -->
-      {% if stretch %}
-      <div class="section-heading">Stretch Terms (Optional)</div>
-      <div class="term-list">
-        {% for term in stretch %}
-        <div class="term-card" style="border-style:dashed;">
-          <div class="term-word" style="color:var(--muted);">{{ term.word }}</div>
-          <div class="term-def">{{ term.definition }}</div>
-          <div class="term-row">
-            <span class="term-row-label">In plain language</span>
-            <span>{{ term.plain }}</span>
-          </div>
-          <div class="term-row">
-            <span class="term-row-label">At LunchRush</span>
-            <span>{{ term.lunchrush }}</span>
-          </div>
-          <div class="term-limit">{{ term.analogy_limit }}</div>
+        <div class="step-nav">
+          <button class="btn-link-back" onclick="prevTerm({{ loop.index }})">← Back</button>
+          {% if loop.last %}
+          <!-- Last term → unlock stretch then activity -->
+          {% if stretch %}
+          <button class="btn-step" onclick="goStep('step-stretch')">See optional terms →</button>
+          {% else %}
+          <button class="btn-step" onclick="goStep('step-activity')">On to the activity →</button>
+          {% endif %}
+          {% else %}
+          <button class="btn-step" onclick="goStep('step-term-{{ loop.index + 1 }}')">Got it — next term →</button>
+          {% endif %}
         </div>
-        {% endfor %}
+      </div>
+      {% endfor %}
+
+      <!-- ── STRETCH TERMS (optional, single page) ──────────────────────── -->
+      {% if stretch %}
+      <div class="ls-step" id="step-stretch">
+        <div class="step-heading">Optional Stretch Terms</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">
+          These terms go deeper. They are not required for the main activity.
+        </p>
+        <div class="term-list">
+          {% for term in stretch %}
+          <div class="term-card" style="border-style:dashed;">
+            <div class="term-word" style="color:var(--muted);">{{ term.word }}</div>
+            <div class="term-def">{{ term.definition }}</div>
+            <div class="term-row">
+              <span class="term-row-label">In plain language</span>
+              <span>{{ term.plain }}</span>
+            </div>
+            <div class="term-row">
+              <span class="term-row-label">At LunchRush</span>
+              <span>{{ term.lunchrush }}</span>
+            </div>
+            <div class="term-limit">{{ term.analogy_limit }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="step-nav">
+          <button class="btn-link-back" onclick="goStep('step-term-{{ essential | length }}')">← Back to last term</button>
+          <button class="btn-step" onclick="goStep('step-activity')">On to the activity →</button>
+        </div>
       </div>
       {% endif %}
 
-      <!-- Step 3: Activity -->
-      <div class="section-heading">{% if ai_feedback %}Activity{% else %}Step 3 — Main Activity{% endif %}</div>
-      <div class="step-box step-activity">
-        <div class="step-label">✏️ Activity</div>
-        <p>{{ lesson.activity }}</p>
-      </div>
-
-      <!-- Step 4: Explain it twice -->
-      <div class="section-heading">{% if ai_feedback %}Explain It Twice{% else %}Step 4 — Explain It Twice{% endif %}</div>
-      <div class="explain-grid">
-        <div class="explain-box">
-          <div class="explain-label">To Jordan (no jargon)</div>
-          <p class="explain-prompt">{{ lesson.explain_plain }}</p>
+      <!-- ── ACTIVITY ────────────────────────────────────────────────────── -->
+      <div class="ls-step" id="step-activity">
+        <div class="step-heading">Step 2 — Activity</div>
+        <div class="step-box step-activity">
+          <div class="step-label">✏️ Practice</div>
+          <p>{{ lesson.activity }}</p>
         </div>
-        <div class="explain-box">
-          <div class="explain-label">To Alex (use the vocabulary)</div>
-          <p class="explain-prompt">{{ lesson.explain_tech }}</p>
+        <div class="step-nav">
+          {% if stretch %}
+          <button class="btn-link-back" onclick="goStep('step-stretch')">← Back</button>
+          {% else %}
+          <button class="btn-link-back" onclick="goStep('step-term-{{ essential | length }}')">← Back to terms</button>
+          {% endif %}
+          <button class="btn-step" onclick="goStep('step-explain')">I've done the activity →</button>
         </div>
       </div>
 
-      <!-- Step 5: Exit check -->
-      <div class="section-heading">{% if ai_feedback %}Exit Check{% else %}Step 5 — Exit Check{% endif %}</div>
-      <div class="exit-list">
-        <div class="exit-q"><span class="exit-num">1</span>{{ lesson.exit_q1 }}</div>
-        <div class="exit-q"><span class="exit-num">2</span>{{ lesson.exit_q2 }}</div>
-        <div class="exit-q"><span class="exit-num">3</span>{{ lesson.exit_q3 }}</div>
+      <!-- ── EXPLAIN IT TWICE ───────────────────────────────────────────── -->
+      <div class="ls-step" id="step-explain">
+        <div class="step-heading">Step 3 — Explain It Twice</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+          Explaining something two ways — once simply, once with the vocabulary — is one of the strongest ways to know if you understand it.
+        </p>
+        <div class="explain-grid">
+          <div class="explain-box">
+            <div class="explain-label">To Jordan (no jargon)</div>
+            <p class="explain-prompt">{{ lesson.explain_plain }}</p>
+          </div>
+          <div class="explain-box">
+            <div class="explain-label">To Alex (use the vocabulary)</div>
+            <p class="explain-prompt">{{ lesson.explain_tech }}</p>
+          </div>
+        </div>
+        <div class="step-nav">
+          <button class="btn-link-back" onclick="goStep('step-activity')">← Back</button>
+          <button class="btn-step" onclick="goStep('step-exit')">Ready for the exit check →</button>
+        </div>
       </div>
 
-      <!-- Actions -->
-      <div class="action-row">
-        <a class="btn-accent" href="/lesson/{{ lesson.number }}/flashcards">
-          🃏 Study with Flashcards
+      <!-- ── EXIT CHECK ─────────────────────────────────────────────────── -->
+      <div class="ls-step" id="step-exit">
+        <div class="step-heading">Step 4 — Exit Check</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">
+          Three short questions. Write your answers in your workbook or on paper — these are for your own reflection.
+        </p>
+        <div class="exit-list">
+          <div class="exit-q"><span class="exit-num">1</span>{{ lesson.exit_q1 }}</div>
+          <div class="exit-q"><span class="exit-num">2</span>{{ lesson.exit_q2 }}</div>
+          <div class="exit-q"><span class="exit-num">3</span>{{ lesson.exit_q3 }}</div>
+        </div>
+        <div class="step-nav" style="flex-wrap:wrap;gap:10px;">
+          <button class="btn-link-back" onclick="goStep('step-explain')">← Back</button>
+          <a class="btn-accent" href="/lesson/{{ lesson.number }}/flashcards">🃏 Review with Flashcards</a>
+          {% if lesson.number < 8 %}
+          <a class="btn-secondary" href="/lesson/{{ lesson.number + 1 }}/probe">Next Lesson →</a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Always-visible bottom nav (prev lesson) -->
+      {% if lesson.number > 1 %}
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+        <a class="btn-secondary" href="/lesson/{{ lesson.number - 1 }}/probe" style="font-size:12px;">
+          ← Back to Lesson {{ lesson.number - 1 }}
         </a>
-        {% if lesson.number > 1 %}
-        <a class="btn-secondary" href="/lesson/{{ lesson.number - 1 }}/probe">← Previous</a>
-        {% endif %}
-        {% if lesson.number < 8 %}
-        <a class="btn-secondary" href="/lesson/{{ lesson.number + 1 }}/probe">Next Lesson →</a>
-        {% endif %}
       </div>
-    </main>
+      {% endif %}
 
+    </main>
   </div>
 </div>
 
 <style>
-/* AI banner */
+/* ── Stepped layout ──────────────────────────────────────────────────────── */
+.ls-step {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+.ls-step.active {
+  display: block;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.step-heading {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 14px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.step-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.btn-step {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-step:hover { opacity: 0.88; }
+
+.btn-link-back {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.btn-link-back:hover { color: var(--text); }
+
+.progress-label {
+  font-weight: 600;
+}
+
+/* ── Term reveal (name fades in after short delay) ───────────────────────── */
+.term-reveal {
+  opacity: 0;
+  transition: opacity 0.6s ease 0.5s;  /* 0.5s delay so learner sees definition first */
+}
+.term-reveal.shown {
+  opacity: 1;
+}
+.term-teaser {
+  transition: opacity 0.3s ease;
+}
+.term-teaser.hidden {
+  display: none;
+}
+
+/* ── AI banner ───────────────────────────────────────────────────────────── */
 .ai-banner {
   display: flex;
   gap: 14px;
@@ -191,12 +343,12 @@
 .ai-tag-unclear { background: #fef3c7; color: #92400e; }
 .ai-tag-understood { background: #dcfce7; color: #166534; }
 
-/* Term focus badges */
+/* ── Focus / understood badges ───────────────────────────────────────────── */
 .term-focus { border-left: 3px solid #f59e0b; }
 .focus-badge { font-size: 10px; font-weight: 700; background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
 .understood-badge { font-size: 10px; font-weight: 700; background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
 
-/* Explain it back */
+/* ── Explain it back ─────────────────────────────────────────────────────── */
 .explain-back {
   margin-top: 12px;
   padding-top: 12px;
@@ -214,6 +366,7 @@
   resize: none;
   outline: none;
   margin-bottom: 6px;
+  box-sizing: border-box;
 }
 .eb-input:focus { border-color: var(--accent); }
 .eb-btn {
@@ -233,12 +386,86 @@
   font-size: 13px;
   line-height: 1.5;
 }
-.eb-strong { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
-.eb-developing { background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
+.eb-strong    { background: #dcfce7; border: 1px solid #bbf7d0; color: #166534; }
+.eb-developing{ background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
 .eb-beginning { background: #fee2e2; border: 1px solid #fecaca; color: #991b1b; }
 </style>
 
 <script>
+// ── Step navigation ──────────────────────────────────────────────────────────
+
+const TOTAL_TERMS = {{ essential | length }};
+
+function goStep(stepId) {
+  // Hide all steps
+  document.querySelectorAll('.ls-step').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById(stepId);
+  if (!target) return;
+  target.classList.add('active');
+
+  // Scroll to top of main content
+  target.scrollIntoView({behavior: 'smooth', block: 'start'});
+
+  // Trigger term-name reveal for term steps
+  const termStep = target.dataset.termStep;
+  if (termStep) {
+    revealTermName(target);
+    updateProgress(parseInt(termStep, 10));
+  } else {
+    updateProgressLabel(stepId);
+  }
+}
+
+function startTerms() {
+  goStep('step-term-1');
+}
+
+function prevTerm(currentIndex) {
+  if (currentIndex <= 1) {
+    goStep('step-explore');
+  } else {
+    goStep('step-term-' + (currentIndex - 1));
+  }
+}
+
+// Reveal the term name 0.5 s after the step becomes visible
+// (learner sees definition first and can guess the word)
+function revealTermName(stepEl) {
+  const termWord = stepEl.querySelector('.term-reveal');
+  const teaser   = stepEl.querySelector('.term-teaser');
+  if (!termWord) return;
+  // Reset in case they navigate back
+  termWord.classList.remove('shown');
+  if (teaser) teaser.classList.remove('hidden');
+  // Trigger reflow so the CSS transition fires again
+  void termWord.offsetWidth;
+  setTimeout(() => {
+    termWord.classList.add('shown');
+    if (teaser) teaser.classList.add('hidden');
+  }, 500);
+}
+
+function updateProgress(termIndex) {
+  const el = document.getElementById('progress-label');
+  if (el) el.textContent = 'Term ' + termIndex + ' of ' + TOTAL_TERMS;
+}
+
+function updateProgressLabel(stepId) {
+  const el = document.getElementById('progress-label');
+  if (!el) return;
+  const labels = {
+    'step-story':    'Scene',
+    'step-explore':  'Think First',
+    'step-stretch':  'Stretch Terms',
+    'step-activity': 'Activity',
+    'step-explain':  'Explain It Twice',
+    'step-exit':     'Exit Check',
+  };
+  el.textContent = labels[stepId] || '';
+}
+
+// ── Explain-it-back ──────────────────────────────────────────────────────────
+
 async function checkExplanation(termId) {
   const textarea = document.querySelector(`[data-term-id="${termId}"]`);
   const response = textarea.value.trim();
@@ -260,7 +487,11 @@ async function checkExplanation(termId) {
     fbDiv.style.display = 'block';
     fbDiv.className = `eb-feedback eb-${data.score}`;
 
-    const scoreLabel = {strong: '✓ Strong', developing: '~ Developing', beginning: '↺ Keep going'}[data.score] || data.score;
+    const scoreLabel = {
+      strong:     '✓ Strong',
+      developing: '~ Developing',
+      beginning:  '↺ Keep going'
+    }[data.score] || data.score;
     fbDiv.innerHTML = `<strong>${scoreLabel}</strong> — ${data.comment}`;
   } catch(e) {
     const fbDiv = document.getElementById(`ebf-${termId}`);
@@ -272,5 +503,10 @@ async function checkExplanation(termId) {
     btn.disabled = false;
   }
 }
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  updateProgressLabel('step-story');
+});
 </script>
 {% endblock %}
