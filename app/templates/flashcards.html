@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Flashcards — Lesson {{ lesson.number }} — Cloud Before Code{% endblock %}
+{% block content %}
+<div class="container">
+  <p style="margin-bottom:8px;font-size:13px;color:var(--muted);">
+    <a href="/lesson/{{ lesson.number }}">← Back to Lesson {{ lesson.number }}</a>
+  </p>
+  <h1 class="page-title">Lesson {{ lesson.number }}: Flashcards</h1>
+  <p class="page-sub">{{ lesson.title }} — {{ terms|length }} essential terms</p>
+
+  <div class="fc-wrap">
+    <div class="fc-progress" id="progress">Card 1 of {{ terms|length }}</div>
+
+    <!-- Cards container -->
+    <div id="cards-container">
+      {% for term in terms %}
+      <div class="fc-stage {% if not loop.first %}hidden-card{% endif %}" id="card-{{ loop.index0 }}" onclick="flipCard({{ loop.index0 }})">
+        <div class="fc-inner">
+          <div class="fc-front">
+            <div class="fc-word">{{ term.word }}</div>
+            <div class="fc-tap">Tap to reveal</div>
+          </div>
+          <div class="fc-back">
+            <div class="fc-label">Definition</div>
+            <div class="fc-def">{{ term.definition }}</div>
+            <div class="fc-plain">{{ term.plain }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <div class="fc-stage hidden-card" id="card-done">
+        <div class="fc-done">
+          <h2>🎉 All done!</h2>
+          <p>You've reviewed all {{ terms|length }} terms for Lesson {{ lesson.number }}.</p>
+          <a class="btn-accent" href="/lesson/{{ lesson.number }}/flashcards">Start over</a>
+          &nbsp;
+          <a class="btn-secondary" href="/lesson/{{ lesson.number }}">Back to lesson</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="fc-controls" id="controls">
+      <button class="fc-btn" onclick="prevCard()">← Prev</button>
+      <button class="fc-btn" onclick="nextCard()">Next →</button>
+    </div>
+    <div class="fc-counter" id="counter"></div>
+  </div>
+</div>
+
+<style>
+  .hidden-card { display: none; }
+</style>
+
+<script>
+  const total = {{ terms|length }};
+  let current = 0;
+
+  function showCard(n) {
+    // hide all
+    for (let i = 0; i < total; i++) {
+      const el = document.getElementById('card-' + i);
+      if (el) el.classList.add('hidden-card');
+    }
+    document.getElementById('card-done').classList.add('hidden-card');
+    document.getElementById('controls').style.display = 'flex';
+
+    if (n >= total) {
+      document.getElementById('card-done').classList.remove('hidden-card');
+      document.getElementById('controls').style.display = 'none';
+      document.getElementById('progress').textContent = 'Complete!';
+      document.getElementById('counter').textContent = '';
+      return;
+    }
+    const card = document.getElementById('card-' + n);
+    card.classList.remove('hidden-card');
+    // reset flip
+    card.classList.remove('flipped');
+    document.getElementById('progress').textContent = 'Card ' + (n + 1) + ' of ' + total;
+    document.getElementById('counter').textContent = 'Click the card to reveal the definition';
+    current = n;
+  }
+
+  function flipCard(n) {
+    const card = document.getElementById('card-' + n);
+    card.classList.toggle('flipped');
+    document.getElementById('counter').textContent = card.classList.contains('flipped')
+      ? 'Click again to flip back'
+      : 'Click the card to reveal the definition';
+  }
+
+  function nextCard() { showCard(current + 1); }
+  function prevCard() { if (current > 0) showCard(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight') nextCard();
+    if (e.key === 'ArrowLeft')  prevCard();
+    if (e.key === ' ') { e.preventDefault(); flipCard(current); }
+  });
+
+  showCard(0);
+</script>
+{% endblock %}

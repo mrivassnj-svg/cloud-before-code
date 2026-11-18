@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}All Lessons — Cloud Before Code{% endblock %}
+{% block content %}
+<div class="container">
+  <h1 class="page-title">LunchRush — Eight Cloud Challenges</h1>
+  <p class="page-sub">Help a small food-ordering business move to the cloud. Each lesson starts with a business problem — vocabulary comes after.</p>
+
+  <div class="lesson-grid">
+    {% for lesson in lessons %}
+    <a class="lesson-card" href="/lesson/{{ lesson.number }}">
+      <div>
+        <div class="lesson-num">Lesson {{ lesson.number }}</div>
+        {% if lesson.full %}
+        <span class="badge badge-full">Full lesson</span>
+        {% else %}
+        <span class="badge badge-outline">Outline</span>
+        {% endif %}
+      </div>
+      <div class="lesson-title">{{ lesson.title }}</div>
+      <div class="lesson-challenge">{{ lesson.challenge }}</div>
+      <div style="font-size:12px;color:var(--accent);margin-top:4px;">
+        {{ lesson.terms|length }} terms →
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

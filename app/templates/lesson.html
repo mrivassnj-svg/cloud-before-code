@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Lesson {{ lesson.number }}: {{ lesson.title }} — Cloud Before Code{% endblock %}
+{% block content %}
+<div class="container">
+  <div class="lesson-layout">
+
+    <!-- Sidebar -->
+    <aside class="lesson-sidebar">
+      <div class="sidebar-nav">
+        <div class="sidebar-nav-title">All Lessons</div>
+        {% for l in all_lessons %}
+        <a href="/lesson/{{ l.number }}" class="{{ 'active' if l.number == lesson.number else '' }}">
+          <span class="sn">Lesson {{ l.number }}</span>
+          {{ l.title }}
+        </a>
+        {% endfor %}
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main>
+      <div style="margin-bottom:6px;">
+        <span style="font-size:12px;color:var(--muted);">Lesson {{ lesson.number }}</span>
+        {% if lesson.full %}
+        <span class="badge badge-full" style="margin-left:8px;">Full lesson</span>
+        {% else %}
+        <span class="badge badge-outline" style="margin-left:8px;">Outline</span>
+        {% endif %}
+      </div>
+
+      <h1 class="page-title">{{ lesson.title }}</h1>
+      <p class="page-sub">{{ lesson.challenge }}</p>
+
+      <!-- Story -->
+      <div class="story-box">
+        <strong>The Story</strong>
+        {{ lesson.story }}
+      </div>
+
+      <!-- Essential terms -->
+      <div class="section-heading">Essential Terms</div>
+      <div class="term-list">
+        {% for term in essential %}
+        <div class="term-card">
+          <div class="term-word">{{ term.word }}</div>
+          <div class="term-def">{{ term.definition }}</div>
+          <div class="term-row">
+            <span class="term-row-label">In plain language</span>
+            <span>{{ term.plain }}</span>
+          </div>
+          <div class="term-row">
+            <span class="term-row-label">At LunchRush</span>
+            <span>{{ term.lunchrush }}</span>
+          </div>
+          <div class="term-limit">{{ term.analogy_limit }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Stretch terms -->
+      {% if stretch %}
+      <div class="section-heading">Stretch Terms (Optional)</div>
+      <div class="term-list">
+        {% for term in stretch %}
+        <div class="term-card" style="border-style:dashed;">
+          <div class="term-word" style="color:var(--muted);">{{ term.word }}</div>
+          <div class="term-def">{{ term.definition }}</div>
+          <div class="term-row">
+            <span class="term-row-label">In plain language</span>
+            <span>{{ term.plain }}</span>
+          </div>
+          <div class="term-row">
+            <span class="term-row-label">At LunchRush</span>
+            <span>{{ term.lunchrush }}</span>
+          </div>
+          <div class="term-limit">{{ term.analogy_limit }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Actions -->
+      <div class="action-row">
+        <a class="btn-accent" href="/lesson/{{ lesson.number }}/flashcards">
+          🃏 Study with Flashcards
+        </a>
+        {% if lesson.number > 1 %}
+        <a class="btn-secondary" href="/lesson/{{ lesson.number - 1 }}">← Previous</a>
+        {% endif %}
+        {% if lesson.number < 8 %}
+        <a class="btn-secondary" href="/lesson/{{ lesson.number + 1 }}">Next →</a>
+        {% endif %}
+      </div>
+    </main>
+
+  </div>
+</div>
+{% endblock %}

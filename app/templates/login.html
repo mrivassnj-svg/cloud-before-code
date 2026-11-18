@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in — Cloud Before Code</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <h1>Cloud Before Code</h1>
+    <p class="sub">Learn cloud computing through the LunchRush story.</p>
+
+    {% if error %}
+    <div class="error-msg">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" action="/login">
+      <label for="password">Class password</label>
+      <input type="password" id="password" name="password" placeholder="Enter password" autofocus required>
+      <button type="submit" class="btn-primary">Log in →</button>
+    </form>
+
+    <p class="login-hint">
+      This is a shared class login.<br>
+      No personal account required.
+    </p>
+  </div>
+</div>
+</body>
+</html>
